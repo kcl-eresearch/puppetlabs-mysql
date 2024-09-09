@@ -40,7 +40,7 @@ class mysql::backup::mysqlbackup (
   }
   mysql_user { "${backupuser}@localhost":
     ensure        => $ensure,
-    password_hash => Deferred('mysql::password', [$backuppassword]),
+    password_hash => mysql::password($backuppassword),
     require       => Class['mysql::server::root_password'],
   }
 
@@ -108,14 +108,14 @@ class mysql::backup::mysqlbackup (
       'incremental_base'       => 'history:last_backup',
       'incremental_backup_dir' => $backupdir,
       'user'                   => $backupuser,
-      'password'               => Deferred('mysql::password', [$backuppassword_unsensitive]),
+      'password'               => $backuppassword_unsensitive,
     },
   }
   $options = mysql::normalise_and_deepmerge($default_options, $mysql::server::override_options)
 
   file { 'mysqlbackup-config-file':
     path    => '/etc/mysql/conf.d/meb.cnf',
-    content => stdlib::deferrable_epp('mysql/meb.cnf.epp', { 'options' => $options }),
+    content => template('mysql/meb.cnf.erb'),
     mode    => '0600',
   }
 
